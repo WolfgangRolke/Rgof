@@ -1,0 +1,106 @@
+---
+title:  "Figures and Tables for Journal Article"
+header-includes:
+   - \usepackage{mathrsfs}
+output:
+  html_document: default
+  pdf_document: 
+    keep_tex:  true
+---
+
+```{r setup, echo=FALSE, message=FALSE}
+library(knitr)
+library(kableExtra)
+library(tidyverse)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, error=TRUE)
+library(Rgof)
+library(gridExtra)
+```
+
+```{r}
+kable.nice = function (x, do.row.names = TRUE, col.names = NA, font.size = 15) 
+{
+    knitr::kable(x, row.names = do.row.names, col.names = col.names) %>% 
+        kableExtra::kable_styling(bootstrap_options = "striped", full_width = FALSE, 
+            font_size = font.size, latex_options = "HOLD_position")
+} 
+```
+
+## Read data from files
+
+```{r}
+par_cont_80=read.table("par_cont_80.txt", check.names = FALSE)
+par_disc_80=read.table("par_disc_80.txt", check.names = FALSE)
+par_cont_05=read.table("par_cont_05.txt", check.names = FALSE)
+par_disc_05=read.table("par_disc_05.txt", check.names = FALSE)
+best_cont=read.table("best_cont.txt", check.names = FALSE)
+best_disc=read.table("best_disc.txt", check.names = FALSE)
+pwr_cont=as.matrix(read.table("normal.t.est.cont.dat", check.names = FALSE))
+pwr_disc=as.matrix(read.table("normal.t.est.disc.dat", check.names = FALSE))
+```
+
+## Figures
+
+### Figure 1: Power curve for Normal vs t
+
+```{r}
+plot1=plot_power(pwr_cont, "df")
+plot2=plot_power(pwr_disc, "df")
+grid.arrange(plot1, plot2, ncol=2)
+ggsave("C:\\Users\\Wolfgang\\Dropbox\\Rgof\\Paper\\fig1.pdf", arrangeGrob(plot1, plot2))
+```
+
+
+## Tables
+
+### Table 2: Type I errors for continuous data
+
+```{r}
+kable.nice(round(par_cont_05[, 1:9]*100,1))
+kable.nice(round(par_cont_05[, 10:17]*100,1))
+```
+
+### Table 3: Type I errors for discrete data
+
+```{r}
+kable.nice(round(par_disc_05[, 1:8]*100,1))
+kable.nice(round(par_disc_05[, 9:12]*100,1))
+```
+
+
+### Table 4: Power for continuous data
+
+```{r}
+kable.nice(round(par_cont_80[, 1:9]*100,1))
+kable.nice(round(par_cont_80[, 10:17]*100,1))
+```
+
+### Table 5: Power for discrete data
+
+```{r}
+kable.nice(round(par_disc_80[, 1:8]*100,1))
+kable.nice(round(par_disc_80[, 9:12]*100,1))
+```
+
+### Table 6: Number of times a best is close to best
+
+```{r}
+par_cont_80_max=apply(par_cont_80, 1, max)
+par_cont_80_index=0*par_cont_80
+for(i in seq_along(par_cont_80_max))
+  par_cont_80_index[i, ]=ifelse(par_cont_80[i, ]>0.9*par_cont_80_max[i], 1, 0)
+A = sort(apply(par_cont_80_index, 2, sum))[17:1]
+```
+
+
+```{r}
+par_disc_80_max=apply(par_disc_80, 1, max)
+par_disc_80_index=0*par_disc_80
+for(i in seq_along(par_disc_80_max))
+  par_disc_80_index[i, ]=ifelse(par_disc_80[i, ]>0.9*par_disc_80_max[i], 1, 0)
+B = sort(apply(par_disc_80_index, 2, sum))[12:1]
+AB = cbind(names(A), A, c(names(B), rep("",5)), c(B, rep("",5)))
+colnames(AB) = c("Method", "# Best", "Method", "# Best")
+kable.nice(AB, do.row.names = FALSE)
+```
+
